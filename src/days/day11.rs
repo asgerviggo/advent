@@ -3,10 +3,23 @@ use std::{
     iter::once,
 };
 
-pub fn run(input: &str) -> usize {
-    let empty_graph: HashMap<&str, Vec<&str>> = HashMap::new();
+use itertools::Itertools;
 
-    let graph = input
+pub fn part1(input: &str) -> usize {
+    traverse_all_paths("you", "out", HashSet::new(), &create_graph(input))
+}
+pub fn part2(input: &str) -> usize {
+    traverse_all_paths(
+        "svr",
+        "out",
+        HashSet::from(["dac", "fft"]),
+        &create_graph(input),
+    )
+}
+
+fn create_graph(input: &str) -> HashMap<&str, Vec<&str>> {
+    let empty_graph: HashMap<&str, Vec<&str>> = HashMap::new();
+    input
         .lines()
         .chain(once("out: "))
         .fold(empty_graph, |mut acc_state, line| {
@@ -23,11 +36,32 @@ pub fn run(input: &str) -> usize {
             };
             acc_state.insert(label, nodes);
             acc_state
-        });
+        })
+}
 
+fn traverse_all_paths(
+    from: &str,
+    to: &str,
+    via: HashSet<&str>,
+    graph: &HashMap<&str, Vec<&str>>,
+) -> usize {
+    let paths = via
+        .iter()
+        .combinations(via.len());
+    paths.fold(0, |sum, path| {
+        sum + once(from)
+            .chain(
+                path.iter()
+                    .map(|v| **v),
+            )
+            .chain(once(to))
+            .tuple_windows()
+            .fold(1, |acc, (f, t)| acc * from_to(f, t, graph))
+    })
+}
+
+fn from_to(from: &str, to: &str, graph: &HashMap<&str, Vec<&str>>) -> usize {
     let mut paths = HashMap::new();
-    let from = "svr";
-    let to = "out";
     paths.insert(to, 1);
 
     dfs_sum(&graph, &mut paths, from, &HashSet::new());
@@ -70,6 +104,7 @@ fn dfs_sum<'a>(
     }
 }
 
+#[allow(dead_code)]
 fn dfs(
     graph: &HashMap<&str, Vec<&str>>,
     vertex: &str,
@@ -99,13 +134,3 @@ fn dfs(
     println!("No hits!");
     false
 }
-// if vertex == "dac" {
-//     return 0;
-// let dac = visited.contains("dac");
-// let fft = visited.contains("fft");
-// if dac && fft {
-//     return 1;
-// } else {
-//     return 0;
-// }
-// }
