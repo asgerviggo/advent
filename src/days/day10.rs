@@ -1,5 +1,5 @@
 use std::{
-    fmt::Debug,
+    fmt::{Debug, Display},
     iter::once,
     ops::{Add, BitXor, Div, Mul, Sub},
     str::FromStr,
@@ -7,7 +7,14 @@ use std::{
 
 use itertools::Itertools;
 
+use crate::days::Part1;
 use crate::util::parse;
+use crate::{ImplementPart, days::NoPart2};
+
+pub struct Day10;
+ImplementPart!(Day10, Part1, part1, part1, usize);
+impl NoPart2 for Day10 {}
+// ImplementPart!(Day10, Part2, part2, part2, i16);
 
 fn trim(string: &str) -> &str {
     string.trim_matches(&['{', '}', '(', ')', '[', ']'][..])
@@ -39,18 +46,18 @@ macro_rules! create_operator_impl {
 #[derive(Debug, Clone)]
 struct Button<T>(Vec<T>);
 
-// impl<T: Clone> Button<T> {
-//     fn new(fill: T, size: usize) -> Button<T> {
-//         Button(vec![fill; size])
-//     }
-//     fn push(&mut self, item: T) {
-//         Vec::push(
-//             self.0
-//                 .as_mut(),
-//             item,
-//         )
-//     }
-// }
+impl<T: Clone> Button<T> {
+    fn new() -> Button<T> {
+        Button(Vec::new())
+    }
+    fn push(&mut self, item: T) {
+        Vec::push(
+            self.0
+                .as_mut(),
+            item,
+        )
+    }
+}
 
 create_operator_impl!(Add, add, |(&a, &b)| a + b);
 create_operator_impl!(Sub, sub, |(&a, &b)| a - b);
@@ -99,61 +106,126 @@ where
         })
         .collect()
 }
-fn init_target<T: FromStr>(target: &str) -> Vec<T> {
-    trim(target)
-        .split(",")
-        .map(parse)
-        .collect()
+fn init_indicator(target: &str) -> Button<bool> {
+    Button(
+        trim(target)
+            .chars()
+            .map(|c| if c == '#' { true } else { false })
+            .collect(),
+    )
 }
 
-pub fn run(input: &str) -> usize {
+fn part1(input: &str) -> usize {
     let split = create_iterator(input);
     let mut counter = 0;
-    for (indicator, buttons, joltage) in split {
-        // let buttons_bools =
-        //     init_buttons(buttons, indicator.len(), true, false);
+    for (indicator, buttons, _) in split {
+        let buttons_ints =
+            init_buttons::<bool>(buttons, indicator.len(), true, false);
 
-        //let indicator = init_target(indicator);
-
-        // let amount_bools =
-        //     find_min_pushes(buttons_bools, Button(indicator), naive);
-
-        let buttons_ints = init_buttons(buttons, indicator.len(), 1, 0);
-
-        let joltage = init_target(joltage);
-        let amount =
-            find_min_pushes(buttons_ints, Button(joltage), linalg_finder);
+        let indicator = init_indicator(indicator);
+        let amount = find_min_pushes(buttons_ints, indicator, naive);
 
         counter += amount;
     }
     counter
 }
 
-fn find_min_pushes<T>(
+fn init_joltage<T: FromStr>(target: &str) -> Button<T> {
+    Button(
+        trim(target)
+            .split(",")
+            .map(parse)
+            .collect(),
+    )
+}
+
+#[allow(dead_code)]
+fn part2(input: &str) -> i16 {
+    let split = create_iterator(input);
+    let mut counter = 0;
+    for (_, buttons, joltage) in split {
+        let buttons_ints = init_buttons::<i16>(buttons, joltage.len(), 1, 0);
+
+        let joltage = init_joltage::<i16>(joltage);
+        let amount = find_min_pushes(buttons_ints, joltage, linalg_finder);
+
+        counter += amount;
+    }
+    counter
+}
+
+fn find_min_pushes<T, D>(
     buttons: Vec<Button<T>>,
-    joltage: Button<T>,
-    tester: fn(Vec<Button<T>>, Button<T>) -> Option<usize>,
-) -> usize
+    target: Button<T>,
+    tester: fn(Vec<&Button<T>>, &Button<T>) -> Option<D>,
+) -> D
 where
     T: Debug,
+    D: Display,
 {
-    // let size = buttons.len();
-    // for n in 3..size + 1 {
-    //     for combination in buttons
-    //         .iter()
-    //         .combinations(n)
-    //     {
-    match tester(buttons, joltage) {
-        Some(amount) => return amount,
-        None => (),
+    let size = buttons.len();
+    for n in 1..size + 1 {
+        for combination in buttons
+            .iter()
+            .combinations(n)
+        {
+            match tester(combination, &target) {
+                Some(amount) => return amount,
+                None => (),
+            }
+        }
     }
-    //     }
-    // }
     panic!("not found");
 }
 
-fn transpose(cols: Vec<Button<i16>>, col_size: usize) -> Vec<Button<i16>> {
-    let mut rows: Vec<Vec<i16>> = vec![Vec::new(); col_size];
+fn naive(
+    combination: Vec<&Button<bool>>,
+    indicator: &Button<bool>,
+) -> Option<usize> {
+    let Button(test) = combination
+        .iter()
+        .cloned()
+        .fold(indicator.clone(), |acc, button| acc ^ button.clone());
+
+    test.iter()
+        .fold(true, |acc, ind| acc && !*ind)
+        .then_some(combination.len())
+}
+
+fn linalg_finder(
+    combination: Vec<&Button<i16>>,
+    joltage: &Button<i16>,
+) -> Option<i16> {
+    let col_size = joltage
+        .0
+        .len();
+    // combination.push(joltage);
+    let row_size = combination.len() - 1;
+
+    // println!("{combination:?}");
+    let rows = transpose(combination, col_size);
+    let upper = upper_triangular(rows, row_size);
+    //println!("{upper:?}");
+
+    // let cols = transpose(upper, row_size);
+    let reduced = diagonal(upper);
+
+    // check for empty rows with non-zero joltage
+
+    let Button(final_joltage) = reduced
+        .last()
+        .unwrap();
+
+    // Check for negative joltage
+    let sum = final_joltage
+        .iter()
+        .fold(0, |acc, e| acc + *e);
+
+    Some(sum)
+}
+
+fn transpose(cols: Vec<&Button<i16>>, col_size: usize) -> Vec<Button<i16>> {
+    let mut rows: Vec<Button<i16>> = vec![Button::new(); col_size];
     for Button(button) in cols.iter() {
         for (i, &b) in button
             .iter()
@@ -162,9 +234,7 @@ fn transpose(cols: Vec<Button<i16>>, col_size: usize) -> Vec<Button<i16>> {
             rows[i].push(b);
         }
     }
-    rows.iter()
-        .map(|row| Button(row.clone()))
-        .collect()
+    rows
 }
 
 fn gaussian_pass(
@@ -216,38 +286,6 @@ fn upper_triangular(
 }
 fn diagonal(rows: Vec<Button<i16>>) -> Vec<Button<i16>> {
     rows
-}
-
-fn linalg_finder(
-    mut combination: Vec<Button<i16>>,
-    joltage: Button<i16>,
-) -> Option<usize> {
-    let col_size = joltage
-        .0
-        .len();
-    combination.push(joltage);
-    let row_size = combination.len() - 1;
-
-    println!("{combination:?}");
-    let rows = transpose(combination, col_size);
-    let upper = upper_triangular(rows, row_size);
-    println!("{upper:?}");
-
-    let cols = transpose(upper, row_size);
-    let reduced = diagonal(cols);
-
-    // check for empty rows with non-zero joltage
-
-    let Button(final_joltage) = reduced
-        .last()
-        .unwrap();
-
-    // Check for negative joltage
-    let sum = final_joltage
-        .iter()
-        .fold(0, |acc, e| acc + *e);
-
-    Some(sum as usize)
 }
 
 // fn remove_zero_jolts(
@@ -382,17 +420,3 @@ fn linalg_finder(
 // *low_jolt as usize + part2(buttons, new_joltage)
 //     }
 // }
-
-fn naive(
-    combination: Vec<Button<bool>>,
-    indicator: Button<bool>,
-) -> Option<usize> {
-    let Button(test) = combination
-        .iter()
-        .cloned()
-        .fold(indicator.clone(), |acc, button| acc ^ button.clone());
-
-    test.iter()
-        .fold(false, |acc, ind| acc || *ind)
-        .then_some(combination.len())
-}

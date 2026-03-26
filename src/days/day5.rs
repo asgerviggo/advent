@@ -1,5 +1,12 @@
 use itertools::Itertools;
 
+use crate::ImplementPart;
+use crate::days::{Part1, Part2};
+
+pub struct Day5;
+ImplementPart!(Day5, Part1, part1, part1, usize);
+ImplementPart!(Day5, Part2, part2, run, usize);
+
 fn parse(val: &str) -> isize {
     val.parse::<isize>()
         .unwrap()

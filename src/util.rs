@@ -7,6 +7,7 @@ pub fn parse<T: FromStr>(val: &str) -> T {
     }
 }
 
+#[allow(dead_code)]
 #[derive(Debug, PartialEq)]
 pub struct BoolVec(Vec<bool>);
 
@@ -42,8 +43,21 @@ impl FromIterator<bool> for BoolVec {
     }
 }
 
+#[allow(dead_code)]
 #[derive(Clone, Copy)]
 pub struct Point3D(isize, isize, isize);
 
+#[allow(dead_code)]
 #[derive(Clone, Copy)]
 pub struct Point2D(isize, isize);
+
+#[allow(dead_code)]
+fn recursplit(string: String, mid: usize) -> Vec<String> {
+    match string.split_at_checked(mid) {
+        Some((left, right)) => {
+            [vec![left.to_string()], recursplit(right.to_string(), mid)]
+                .concat()
+        }
+        None => vec![string],
+    }
+}

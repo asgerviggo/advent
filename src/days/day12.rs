@@ -1,3 +1,11 @@
+use crate::ImplementPart;
+use crate::days::{NoPart2, Part1};
+
+pub struct Day12;
+ImplementPart!(Day12, Part1, part1, run, usize);
+impl NoPart2 for Day12 {}
+// ImplementPart!(Day12, Part2, part2, create(part2), usize);
+
 pub fn run(input: &str) -> usize {
     let (shapes, regions) = input
         .rsplit_once("\n\n")
@@ -48,7 +56,7 @@ pub fn run(input: &str) -> usize {
     });
 
     //println!("Presents: {:?}, Areas: {:?}", presents, areas);
-    let (counter, remaining) = areas.fold(
+    let (counter, _) = areas.fold(
         (0, Vec::new()),
         |(amount, mut remaining), ((x, y), quota)| {
             let (presents_amount, spaces_amount) = quota
@@ -75,7 +83,7 @@ pub fn run(input: &str) -> usize {
             }
         },
     );
-    println!("Possible: {:?}", remaining);
+    //println!("Possible: {:?}", remaining);
 
     counter
 }

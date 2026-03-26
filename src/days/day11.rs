@@ -5,25 +5,14 @@ use std::{
 
 use itertools::Itertools;
 
-use crate::days::{Part1, Part2};
+use crate::{
+    ImplementPart,
+    days::{Part1, Part2},
+};
 
 pub struct Day11;
-
-impl Part1 for Day11 {
-    type Output = usize;
-
-    fn part1(content: &str) -> Option<Self::Output> {
-        Some(part1(content))
-    }
-}
-
-impl Part2 for Day11 {
-    type Output = usize;
-
-    fn part2(content: &str) -> Option<Self::Output> {
-        Some(part2(content))
-    }
-}
+ImplementPart!(Day11, Part1, part1, part1, usize);
+ImplementPart!(Day11, Part2, part2, part2, usize);
 
 fn part1(input: &str) -> usize {
     traverse_all_paths("you", "out", HashSet::new(), &create_graph(input))

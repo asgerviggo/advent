@@ -1,5 +1,13 @@
 use std::iter::once;
 
+use crate::ImplementPart;
+use crate::days::{NoPart1, Part2};
+
+pub struct Day4;
+impl NoPart1 for Day4 {}
+// ImplementPart!(Day3, Part1, part1, run, usize);
+ImplementPart!(Day4, Part2, part2, run, usize);
+
 pub fn run(content: &str) -> usize {
     let center_lines: Vec<Vec<bool>> = content
         .lines()

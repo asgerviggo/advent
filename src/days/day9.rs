@@ -1,13 +1,18 @@
 use std::collections::HashSet;
 use std::iter::once;
-use std::time::Instant;
 
 use itertools::Itertools;
 
+use crate::ImplementPart;
+use crate::days::{NoPart1, Part2};
 use crate::util::parse;
 
+pub struct Day9;
+impl NoPart1 for Day9 {}
+// ImplementPart!(Day9, Part1, part1, run, usize);
+ImplementPart!(Day9, Part2, part2, run, usize);
+
 pub fn run(input: &str) -> usize {
-    let now = Instant::now();
     let tiles = input
         .lines()
         .map(|line| {

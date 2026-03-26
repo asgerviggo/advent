@@ -1,3 +1,10 @@
+use crate::ImplementPart;
+use crate::days::{Part1, Part2};
+
+pub struct Day7;
+ImplementPart!(Day7, Part1, part1, part1, usize);
+ImplementPart!(Day7, Part2, part2, run, usize);
+
 pub fn part1(input: &str) -> usize {
     let (first, rest) = input
         .split_once("\n")
@@ -74,8 +81,8 @@ pub fn run(input: &str) -> usize {
                         acc
                     },
                 );
-            println!("{line}");
-            println!("{:?}", new_state);
+            // println!("{line}");
+            // println!("{:?}", new_state);
             new_state
         });
 

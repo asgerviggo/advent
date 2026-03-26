@@ -1,9 +1,15 @@
 // use std::iter::Zip;
 
-use itertools::Itertools;
-
 use crate::util::parse;
 
+use crate::ImplementPart;
+use crate::days::{Part1, Part2};
+
+pub struct Day6;
+ImplementPart!(Day6, Part1, part1, part1, usize);
+ImplementPart!(Day6, Part2, part2, run, usize);
+
+#[allow(unused_macros)]
 macro_rules! split {
     ($($x: expr),*) => {
         let () $(

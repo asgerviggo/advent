@@ -2,8 +2,8 @@ use crate::ImplementPart;
 use crate::days::{Part1, Part2};
 
 pub struct Day1;
-ImplementPart!(Part1, part1, run1, i32);
-ImplementPart!(Part2, part2, run2, i32);
+ImplementPart!(Day1, Part1, part1, run1, i32);
+ImplementPart!(Day1, Part2, part2, run2, i32);
 
 fn run2(content: &str) -> i32 {
     let mut dial: i32 = 50;

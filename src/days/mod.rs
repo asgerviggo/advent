@@ -22,11 +22,30 @@ pub trait Part2 {
     fn part2(content: &str) -> Option<Self::Output>;
 }
 
-pub fn solve<S: Part1 + Part2>(content: &str) -> Option<String> {
-    let sol1 = S::part1(content)?.to_string();
-    S::part2(content)
-        .and_then(|sol2| Some(format!("{sol1} ::: {sol2}")))
-        .or(Some(sol1))
+// TODO make this cooler
+pub fn solve<S: Part1 + Part2>(content: &str) -> String {
+    match (S::part1(content), S::part2(content)) {
+        (None, None) => "Not implemented".to_string(),
+        (Some(sol1), None) => format!(":::: part 1 = {sol1}"),
+        (None, Some(sol2)) => format!(":::: part 2 = {sol2}"),
+        (Some(sol1), Some(sol2)) => {
+            format!(":::: part 1 = {sol1}\n :::: part 2 = {sol2}")
+        }
+    }
+}
+#[allow(dead_code)]
+pub fn solve_part1<S: Part1>(content: &str) -> String {
+    match S::part1(content) {
+        None => "Not implemented".to_string(),
+        Some(sol) => format!(":::: part 1 = {sol}"),
+    }
+}
+#[allow(dead_code)]
+pub fn solve_part2<S: Part2>(content: &str) -> String {
+    match S::part2(content) {
+        None => "Not implemented".to_string(),
+        Some(sol) => format!(":::: part 2 = {sol}"),
+    }
 }
 
 pub trait NoPart1 {}
@@ -52,8 +71,8 @@ where
 }
 #[macro_export]
 macro_rules! ImplementPart {
-    ($struct_name: ident, $part: ident, $result: expr, $output: ty) => {
-        impl $struct_name for Day1 {
+    ($day: ident, $struct_name: ident, $part: ident, $result: expr, $output: ty) => {
+        impl $struct_name for $day {
             type Output = $output;
 
             fn $part(content: &str) -> Option<Self::Output> {

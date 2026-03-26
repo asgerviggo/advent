@@ -1,5 +1,14 @@
 use crate::util::parse;
 use std::collections::HashSet;
+
+use crate::ImplementPart;
+use crate::days::{NoPart1, Part2};
+
+pub struct Day8;
+impl NoPart1 for Day8 {}
+// ImplementPart!(Day8, Part1, part1, run, usize);
+ImplementPart!(Day8, Part2, part2, run, usize);
+
 fn distance(
     (x1, y1, z1): (isize, isize, isize),
     (x2, y2, z2): (isize, isize, isize),

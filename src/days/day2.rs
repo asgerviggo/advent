@@ -1,26 +1,38 @@
 use itertools::Itertools;
 
-pub fn run(content: &str) -> usize {
-    let mut counter = 0;
-    for interval in content.split(",") {
-        let (startstr, endstr) = interval
-            .split_once("-")
-            .unwrap();
-        println!("start - end: {:?} - {:?}", startstr, endstr);
-        let (start, end) = (
-            startstr
-                .parse::<usize>()
-                .unwrap(),
-            endstr
-                .trim()
-                .parse::<usize>()
-                .unwrap(),
-        );
-        for n in start..end + 1 {
-            counter += part2(n);
+use crate::ImplementPart;
+use crate::days::{Part1, Part2};
+
+pub struct Day2;
+ImplementPart!(Day2, Part1, part1, create(part1), usize);
+ImplementPart!(Day2, Part2, part2, create(part2), usize);
+
+fn create<F>(part: F) -> impl FnOnce(&str) -> usize
+where
+    F: Fn(usize) -> usize,
+{
+    move |content: &str| {
+        let mut counter = 0;
+        for interval in content.split(",") {
+            let (startstr, endstr) = interval
+                .split_once("-")
+                .unwrap();
+            // println!("start - end: {:?} - {:?}", startstr, endstr);
+            let (start, end) = (
+                startstr
+                    .parse::<usize>()
+                    .unwrap(),
+                endstr
+                    .trim()
+                    .parse::<usize>()
+                    .unwrap(),
+            );
+            for n in start..end + 1 {
+                counter += part(n);
+            }
         }
+        counter
     }
-    return counter;
 }
 
 fn part1(n: usize) -> usize {
@@ -57,21 +69,11 @@ fn part2(n: usize) -> usize {
             });
 
         if hit {
-            println!("{n}");
+            // println!("{n}");
             return n;
         }
     }
     0
-}
-
-fn recursplit(string: String, mid: usize) -> Vec<String> {
-    match string.split_at_checked(mid) {
-        Some((left, right)) => {
-            [vec![left.to_string()], recursplit(right.to_string(), mid)]
-                .concat()
-        }
-        None => vec![string],
-    }
 }
 
 fn factorize(n: usize) -> Vec<usize> {
