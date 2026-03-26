@@ -5,10 +5,30 @@ use std::{
 
 use itertools::Itertools;
 
-pub fn part1(input: &str) -> usize {
+use crate::days::{Part1, Part2};
+
+pub struct Day11;
+
+impl Part1 for Day11 {
+    type Output = usize;
+
+    fn part1(content: &str) -> Option<Self::Output> {
+        Some(part1(content))
+    }
+}
+
+impl Part2 for Day11 {
+    type Output = usize;
+
+    fn part2(content: &str) -> Option<Self::Output> {
+        Some(part2(content))
+    }
+}
+
+fn part1(input: &str) -> usize {
     traverse_all_paths("you", "out", HashSet::new(), &create_graph(input))
 }
-pub fn part2(input: &str) -> usize {
+fn part2(input: &str) -> usize {
     traverse_all_paths(
         "svr",
         "out",

@@ -1,207 +1,398 @@
-use std::collections::HashMap;
+use std::{
+    fmt::Debug,
+    iter::once,
+    ops::{Add, BitXor, Div, Mul, Sub},
+    str::FromStr,
+};
+
+use itertools::Itertools;
 
 use crate::util::parse;
-use itertools::Itertools;
 
 fn trim(string: &str) -> &str {
     string.trim_matches(&['{', '}', '(', ')', '[', ']'][..])
 }
-pub fn run(input: &str) -> usize {
-    let split = input
+
+macro_rules! create_operator_impl {
+    ($impl_name:ident, $method_name:ident, $closure:expr) => {
+        impl<T> $impl_name for Button<T>
+        where
+            T: Copy + $impl_name<Output = T>,
+        {
+            fn $method_name(self, rhs: Self) -> Self {
+                Button(
+                    self.0
+                        .iter()
+                        .zip(
+                            rhs.0
+                                .iter(),
+                        )
+                        .map($closure)
+                        .collect(),
+                )
+            }
+            type Output = Self;
+        }
+    };
+}
+
+#[derive(Debug, Clone)]
+struct Button<T>(Vec<T>);
+
+// impl<T: Clone> Button<T> {
+//     fn new(fill: T, size: usize) -> Button<T> {
+//         Button(vec![fill; size])
+//     }
+//     fn push(&mut self, item: T) {
+//         Vec::push(
+//             self.0
+//                 .as_mut(),
+//             item,
+//         )
+//     }
+// }
+
+create_operator_impl!(Add, add, |(&a, &b)| a + b);
+create_operator_impl!(Sub, sub, |(&a, &b)| a - b);
+create_operator_impl!(Mul, mul, |(&a, &b)| a * b);
+create_operator_impl!(Div, div, |(&a, &b)| a / b);
+create_operator_impl!(BitXor, bitxor, |(&a, &b)| a ^ b);
+
+fn create_iterator<'a>(
+    input: &'a str,
+) -> impl Iterator<Item = (&'a str, &'a str, &'a str)> {
+    input
         .lines()
-        .map(|line| {
+        .map(|line: &str| {
             line.split_once(" ")
                 .unwrap()
         })
-        .map(|(indicator, rest)| {
+        .map(|(indicator, rest): (&str, &str)| {
             let (buttons, joltage) = rest
                 .rsplit_once(" ")
                 .unwrap();
             (trim(indicator), buttons, trim(joltage))
-        });
+        })
+}
 
-    let mut counter = 0;
-    for (indicator, buttons, joltage) in split {
-        let indicator: u32 = indicator
-            .chars()
-            .rev()
-            .fold(0b0u32, |acc, c| {
-                if c == '#' {
-                    let out = acc << 1;
-                    out + 1
-                } else {
-                    acc << 1
-                }
-            });
-
-        let buttons_binary: Vec<u32> = buttons
-            .split(" ")
-            .map(|button| {
+fn init_buttons<T>(
+    buttons: &str,
+    size: usize,
+    fill: T,
+    null: T,
+) -> Vec<Button<T>>
+where
+    T: Clone,
+{
+    buttons
+        .split(" ")
+        .map(|button| {
+            Button(
                 trim(button)
                     .split(",")
-                    .fold(0b0u32, |acc, c| acc + 2u32.pow(parse::<u32>(c)))
-            })
-            .collect();
+                    .fold(vec![null.clone(); size], |mut acc, i| {
+                        let index = parse::<usize>(i);
+                        acc[index] = fill.clone();
+                        acc
+                    }),
+            )
+        })
+        .collect()
+}
+fn init_target<T: FromStr>(target: &str) -> Vec<T> {
+    trim(target)
+        .split(",")
+        .map(parse)
+        .collect()
+}
 
-        let joltage: Vec<usize> = trim(joltage)
-            .split(",")
-            .map(|jolt| parse::<usize>(jolt))
-            .collect();
+pub fn run(input: &str) -> usize {
+    let split = create_iterator(input);
+    let mut counter = 0;
+    for (indicator, buttons, joltage) in split {
+        // let buttons_bools =
+        //     init_buttons(buttons, indicator.len(), true, false);
 
-        println!("Indicator: {:#018b}", indicator);
-        buttons_binary
-            .iter()
-            .for_each(|b| println!("{:#018b}", b));
-        println!("Joltage: {:?}", joltage);
+        //let indicator = init_target(indicator);
 
-        //let amount = naive(indicator, buttons);
-        let amount = part2(buttons, joltage);
+        // let amount_bools =
+        //     find_min_pushes(buttons_bools, Button(indicator), naive);
+
+        let buttons_ints = init_buttons(buttons, indicator.len(), 1, 0);
+
+        let joltage = init_target(joltage);
+        let amount =
+            find_min_pushes(buttons_ints, Button(joltage), linalg_finder);
+
         counter += amount;
     }
-    counter as usize
+    counter
 }
 
-fn part2(buttons: Vec<u32>, joltage: Vec<usize>) -> usize {
-    0
-}
-
-fn naive(indicator: u32, buttons: Vec<u32>) -> usize {
-    let size = buttons.len();
-    for n in 1..size + 1 {
-        for combination in buttons
-            .iter()
-            .combinations(n)
-        {
-            if combination
-                .iter()
-                .fold(indicator, |acc, button| acc ^ *button)
-                == 0
-            {
-                println!("Hit: {:?}", combination);
-                return n;
-            }
-        }
+fn find_min_pushes<T>(
+    buttons: Vec<Button<T>>,
+    joltage: Button<T>,
+    tester: fn(Vec<Button<T>>, Button<T>) -> Option<usize>,
+) -> usize
+where
+    T: Debug,
+{
+    // let size = buttons.len();
+    // for n in 3..size + 1 {
+    //     for combination in buttons
+    //         .iter()
+    //         .combinations(n)
+    //     {
+    match tester(buttons, joltage) {
+        Some(amount) => return amount,
+        None => (),
     }
+    //     }
+    // }
     panic!("not found");
 }
 
-//let mut graph = build_graph(size);
+fn transpose(cols: Vec<Button<i16>>, col_size: usize) -> Vec<Button<i16>> {
+    let mut rows: Vec<Vec<i16>> = vec![Vec::new(); col_size];
+    for Button(button) in cols.iter() {
+        for (i, &b) in button
+            .iter()
+            .enumerate()
+        {
+            rows[i].push(b);
+        }
+    }
+    rows.iter()
+        .map(|row| Button(row.clone()))
+        .collect()
+}
 
-// for (node, edges) in graph.clone() {
-//     let edges_str = edges
-//         .iter()
-//         .fold(String::new(), |acc, e| format!("{}\n{:#016b}", acc, e));
-//     println!("{:#016b} -- {}\n\n", node, edges_str);
-// }
+fn gaussian_pass(
+    rows: Vec<&Button<i16>>,
+    current: Button<i16>,
+) -> Vec<Button<i16>> {
+    let index: usize = current
+        .0
+        .iter()
+        .find_position(|v| **v != 0)
+        .and_then(|(i, _)| Some(i))
+        .expect("Row shouldn't be empty");
+    let to_sub = rows
+        .iter()
+        .filter(|Button(b)| b[index] != 0);
+    let rest = rows
+        .iter()
+        .filter(|Button(b)| b[index] == 0)
+        .map(|b| b.to_owned());
+    to_sub
+        .map(|&row| {
+            if row.0[index] == 1 {
+                row.to_owned() - current.clone()
+            } else {
+                row.to_owned()
+            }
+        })
+        .chain(rest.cloned())
+        .collect()
+}
 
-// let start = 2u16.pow(size) - 1;
-// let min_span = dfs(indicator, &buttons, &mut graph, &start);
-// println!("{min_span}");
-// counter += min_span;
-//
-// fn dfs(
-//     indicator: u32,
-//     buttons: &Vec<u32>,
-//     graph: &mut HashMap<u16, (Vec<u16>, bool)>,
-//     vertex: &u16,
-// ) -> u32 {
-//     let (nodes, visited) = graph
-//         .get(vertex)
-//         .unwrap();
+fn upper_triangular(
+    rows: Vec<Button<i16>>,
+    row_size: usize,
+) -> Vec<Button<i16>> {
+    let mut sorted = rows
+        .iter()
+        .sorted_by_key(|Button(b)| b[row_size]);
+    let lowest = sorted.next();
+    if lowest.is_some() {
+        let low = lowest.unwrap();
+        let remaining = gaussian_pass(sorted.collect(), low.clone());
+        once(low.clone())
+            .chain(upper_triangular(remaining, row_size).into_iter())
+            .collect()
+    } else {
+        rows
+    }
+}
+fn diagonal(rows: Vec<Button<i16>>) -> Vec<Button<i16>> {
+    rows
+}
 
-//     if *visited {
-//         return vertex.count_ones() + 1;
-//     }
+fn linalg_finder(
+    mut combination: Vec<Button<i16>>,
+    joltage: Button<i16>,
+) -> Option<usize> {
+    let col_size = joltage
+        .0
+        .len();
+    combination.push(joltage);
+    let row_size = combination.len() - 1;
 
-//     let active: Vec<u32> = buttons
+    println!("{combination:?}");
+    let rows = transpose(combination, col_size);
+    let upper = upper_triangular(rows, row_size);
+    println!("{upper:?}");
+
+    let cols = transpose(upper, row_size);
+    let reduced = diagonal(cols);
+
+    // check for empty rows with non-zero joltage
+
+    let Button(final_joltage) = reduced
+        .last()
+        .unwrap();
+
+    // Check for negative joltage
+    let sum = final_joltage
+        .iter()
+        .fold(0, |acc, e| acc + *e);
+
+    Some(sum as usize)
+}
+
+// fn remove_zero_jolts(
+//     mut buttons: Vec<&Button<i16>>,
+//     Button(joltage): &Button<i16>,
+// ) -> Vec<&Button<i16>> {
+//     let indices = joltage
 //         .iter()
 //         .enumerate()
-//         .filter_map(|(i, b)| {
-//             if vertex >> i & 1 == 1 {
-//                 Some(b.clone())
-//             } else {
-//                 None
-//             }
-//         })
-//         .collect();
+//         .filter(|(_, jolt)| **jolt == 0);
 
-//     let mut active_with_indicator = active.clone();
-//     let span_rank = find_rank(active);
-//     active_with_indicator.push(indicator);
-//     let indicator_rank = find_rank(active_with_indicator);
+//     let size = joltage.len();
 
-//     if indicator_rank > span_rank {
-//         visit_all(graph, *vertex);
-//         return vertex.count_ones() + 1;
-//     }
-
-//     nodes
-//         .clone()
-//         .into_iter()
-//         .fold(32u32, |acc, node| {
-//             u32::min(acc, dfs(indicator, buttons, graph, &node))
-//         })
+//     buttons.retain(|Button(button)| {
+//         indices
+//             .clone()
+//             .fold(true, |acc, (i, _)| acc && button[i] == 0)
+//     });
+//     buttons
 // }
 
-// fn build_graph(size: u32) -> HashMap<u16, (Vec<u16>, bool)> {
-//     let mut graph = HashMap::new();
-//     for binary in 0..2u16.pow(size) {
-//         let mut edges = Vec::new();
-//         for power in 0..size {
-//             let edge = binary ^ 2u16.pow(power);
-//             if edge < binary {
-//                 edges.push(edge);
-//             }
-//         }
-//         graph.insert(binary, (edges, false));
-//     }
-//     graph
-// }
-
-// fn visit_all(graph: &mut HashMap<u16, (Vec<u16>, bool)>, vertex: u16) {
-//     let (nodes, _) = graph
-//         .entry(vertex)
-//         .and_modify(|(_, visited)| {
-//             *visited = true;
-//         })
-//         .or_default();
-
-//     for node in nodes.clone() {
-//         visit_all(graph, node);
-//     }
-// }
-
-// fn boolean_gaussian_elimination(vectors: Vec<u32>) -> Vec<u32> {
-//     let mut sorted = vectors.clone();
-//     sorted.sort();
-
-//     //println!("Sorted: {:?}", sorted);
-//     let Some((first, rest)) = sorted.split_first() else {
-//         return sorted;
-//     };
-
-//     let mut smaller: Vec<u32> = Vec::new();
-//     for vector in rest {
-//         let dif = first ^ vector;
-//         if dif < *first {
-//             smaller.push(dif);
-//         } else {
-//             smaller.push(*vector);
-//         }
-//     }
-//     let mut out = Vec::new();
-//     out.push(*first);
-//     if smaller.len() > 0 {
-//         [out, boolean_gaussian_elimination(smaller)].concat()
-//     } else {
-//         out
-//     }
-// }
-
-// fn find_rank(vectors: Vec<u32>) -> u32 {
-//     let gauss = boolean_gaussian_elimination(vectors);
-//     //println!("{:?}", gauss);
-//     gauss
+// fn remove_uniquely_determined_row(
+//     mut buttons: Vec<&Button<i16>>,
+//     Button(joltage): &Button<i16>,
+// ) -> Button<i16> {
+//     let Button(sum_vec) = buttons
 //         .iter()
-//         .fold(0, |acc, v| if *v == 0 { acc } else { acc + 1 })
+//         .cloned()
+//         .fold(Button::new(0, size), |acc, button| acc + *button);
+
+//     // println!("---");
+//     // println!("Joltage: {:?}", joltage);
+//     // buttons
+//     //     .iter()
+//     //     .for_each(|b| println!("{:?}", b.0));
+//     // println!("Sum_vec: {sum_vec:?}");
+
+//     let ((min_index, min), (max_index, max)) = sum_vec
+//         .iter()
+//         .enumerate()
+//         .filter(|(_, e)| **e > 0)
+//         .minmax_by_key(|(_, e)| **e)
+//         .into_option()?;
+
+//     if *min == 1 {
+//         let &amount = joltage
+//             .get(min_index)
+//             .unwrap();
+//         let button = buttons
+//             .iter()
+//             .find(|Button(b)| b[min_index] == 1)
+//             .cloned()
+//             .expect("This exists");
+
+//         // Check overflow
+//         Button(*joltage) - button * Button::new(amount, size)
+//     } else {
+//         Button(*joltage)
+//     }
 // }
+
+// println!("Min - Max: {min_index} - {max_index}");
+
+// println!("---");
+
+// let buttons_amount = buttons.len();
+// let sum = joltage
+//     .iter()
+//     .fold(0, |acc, jolt| acc + jolt);
+// if (*max).into() == buttons_amount {
+//     println!("here: {sum}");
+//     match sum {
+//         0 => return Some(joltage[max_index].into()),
+//         _ => return None,
+//     }
+// }
+
+// let (index, low_jolt) = joltage
+//     .iter()
+//     .enumerate()
+//     .filter(|(_, e)| **e > 0)
+//     .min_by_key(|(_, e)| *e)
+//     .expect("Shouldn't be empty");
+
+// let mut jolt = *low_jolt;
+
+// let lowest = buttons
+//     .iter()
+//     .filter(|Button(b)| b[index] == 1);
+// let lowest_length = lowest
+//     .clone()
+//     .count();
+
+// //println!("Lowest: {:?}", lowest);
+// // return error here if lowest is empty
+
+// let weights = lowest
+//     .clone()
+//     .enumerate()
+//     .map(|(i, _)| {
+//         if i == lowest_length {
+//             jolt + 1
+//         } else {
+//             let r = rand::random_range(0..jolt + 1);
+//             jolt -= r;
+//             r
+//         }
+//     });
+
+// let new_joltage = lowest
+//     .cloned()
+//     .zip(weights)
+//     .fold(Button(joltage.clone()), |acc, (low, weight)| {
+//         // Check overflow
+//         acc - low * Button::new(weight, size)
+//     });
+
+// println!("New joltage: {:?}", new_joltage);
+// if joltage
+//     .iter()
+//     .zip(
+//         new_joltage
+//             .clone()
+//             .0,
+//     )
+//     .fold(0, |acc, (old, new)| acc + old - new)
+//     == 0
+// {
+//     panic!("stuck!")
+// }
+
+// *low_jolt as usize + part2(buttons, new_joltage)
+//     }
+// }
+
+fn naive(
+    combination: Vec<Button<bool>>,
+    indicator: Button<bool>,
+) -> Option<usize> {
+    let Button(test) = combination
+        .iter()
+        .cloned()
+        .fold(indicator.clone(), |acc, button| acc ^ button.clone());
+
+    test.iter()
+        .fold(false, |acc, ind| acc || *ind)
+        .then_some(combination.len())
+}
