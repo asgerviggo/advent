@@ -1,4 +1,9 @@
+use crate::ImplementPart;
 use crate::days::{Part1, Part2};
+
+pub struct Day1;
+ImplementPart!(Part1, part1, run1, i32);
+ImplementPart!(Part2, part2, run2, i32);
 
 fn run2(content: &str) -> i32 {
     let mut dial: i32 = 50;
@@ -69,22 +74,4 @@ fn run1(content: &str) -> i32 {
         }
     }
     counter
-}
-
-pub struct Day1;
-
-impl Part1 for Day1 {
-    type Output = i32;
-
-    fn part1(content: &str) -> Option<Self::Output> {
-        Some(run1(content))
-    }
-}
-
-impl Part2 for Day1 {
-    type Output = i32;
-
-    fn part2(content: &str) -> Option<Self::Output> {
-        Some(run2(content))
-    }
 }

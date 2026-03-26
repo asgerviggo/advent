@@ -14,7 +14,7 @@ fn trim(string: &str) -> &str {
 }
 
 macro_rules! create_operator_impl {
-    ($impl_name:ident, $method_name:ident, $closure:expr) => {
+    ($impl_name: ident, $method_name: ident, $closure: expr) => {
         impl<T> $impl_name for Button<T>
         where
             T: Copy + $impl_name<Output = T>,

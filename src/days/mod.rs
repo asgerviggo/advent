@@ -23,11 +23,10 @@ pub trait Part2 {
 }
 
 pub fn solve<S: Part1 + Part2>(content: &str) -> Option<String> {
-    let sol1 = S::part1(content)?;
-    let part1 = format!("{sol1}");
+    let sol1 = S::part1(content)?.to_string();
     S::part2(content)
-        .and_then(|sol2| Some(format!("{part1} ::: {sol2}")))
-        .or(Some(part1))
+        .and_then(|sol2| Some(format!("{sol1} ::: {sol2}")))
+        .or(Some(sol1))
 }
 
 pub trait NoPart1 {}
@@ -50,6 +49,18 @@ where
     fn part2(_: &str) -> Option<Self::Output> {
         None
     }
+}
+#[macro_export]
+macro_rules! ImplementPart {
+    ($struct_name: ident, $part: ident, $result: expr, $output: ty) => {
+        impl $struct_name for Day1 {
+            type Output = $output;
+
+            fn $part(content: &str) -> Option<Self::Output> {
+                Some($result(content))
+            }
+        }
+    };
 }
 
 // pub trait Test {
