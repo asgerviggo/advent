@@ -13,8 +13,10 @@ impl Solution for Day1 {
 }
 
 fn run2(content: &str) -> i32 {
-    let mut dial: i32 = 50;
+    // Offset to not pass into negative numbers
+    let mut dial: i32 = 50 + 50000;
     let mut counter: i32 = 0;
+    let n = 100;
 
     for line in content.lines() {
         let before = dial.clone();
@@ -25,15 +27,15 @@ fn run2(content: &str) -> i32 {
             ("L", amount) => -amount
                 .parse::<i32>()
                 .unwrap(),
-            _ => 0,
+            _ => panic!("Malformed input!"),
         };
-        let difference = i32::abs(dial - before);
-
-        counter += difference % 100; // + passed_zero;
-        //println!(
-        //    "line: {:?}, dial: {:?}, dif: {:?}, counter: {:?}",
-        //    line, dial, dif, counter
-        //);
+        let dif = dial - before;
+        let add = match dif.signum() {
+            1 => (before % n + dif) / n,
+            -1 => (n - before % n - dif - 2) / n,
+            _ => panic!("Should have sign"),
+        };
+        counter += add;
     }
     counter
 }

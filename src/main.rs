@@ -1,7 +1,6 @@
 use clap::Parser;
 use colored::Colorize;
 use std::fs::read_to_string;
-use std::time::Instant;
 
 mod days;
 mod util;
@@ -46,9 +45,12 @@ fn main() {
     let Arguments { time, range } = Arguments::parse();
     let days_to_run: Vec<usize> = range
         .split(",")
-        .map(|range| match range.split_once("-") {
-            Some((min, max)) => parse(min)..(parse::<usize>(max) + 1),
-            None => parse(range)..(parse::<usize>(range) + 1),
+        .map(|range| {
+            let (min, max) = match range.split_once("-") {
+                Some((min, max)) => (min, max),
+                None => (range, range),
+            };
+            parse(min)..(parse::<usize>(max) + 1)
         })
         .flatten()
         .collect();
@@ -69,8 +71,6 @@ fn main() {
         };
     }
 
-    let begin_time = Instant::now();
-
     runner!(Day1);
     runner!(Day2);
     runner!(Day3);
@@ -83,12 +83,4 @@ fn main() {
     runner!(Day10);
     runner!(Day11);
     runner!(Day12);
-
-    let final_time = Instant::now();
-    println!("\nTotal time: {:#?}", final_time - begin_time);
-
-    // if args.test {
-    //     todo!()
-    //     // let test1 = test::<Day1>(include_str!("../data/days/day1.txt"), 32491);
-    // }
 }
