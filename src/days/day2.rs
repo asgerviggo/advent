@@ -1,11 +1,18 @@
 use itertools::Itertools;
 
-use crate::ImplementPart;
-use crate::days::{Part1, Part2};
+use crate::days::Solution;
 
 pub struct Day2;
-ImplementPart!(Day2, Part1, part1, create(part1), usize);
-ImplementPart!(Day2, Part2, part2, create(part2), usize);
+impl Solution for Day2 {
+    const VAL: usize = 2;
+    type Output = usize;
+    fn part1(content: &str) -> Option<Self::Output> {
+        Some(create(part1)(content))
+    }
+    fn part2(content: &str) -> Option<Self::Output> {
+        Some(create(part2)(content))
+    }
+}
 
 fn create<F>(part: F) -> impl FnOnce(&str) -> usize
 where

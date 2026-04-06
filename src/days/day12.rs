@@ -1,10 +1,16 @@
-use crate::ImplementPart;
-use crate::days::{NoPart2, Part1};
+use crate::days::Solution;
 
 pub struct Day12;
-ImplementPart!(Day12, Part1, part1, run, usize);
-impl NoPart2 for Day12 {}
-// ImplementPart!(Day12, Part2, part2, create(part2), usize);
+impl Solution for Day12 {
+    const VAL: usize = 12;
+    type Output = usize;
+    fn part1(content: &str) -> Option<Self::Output> {
+        Some(run(content))
+    }
+    fn part2(_: &str) -> Option<Self::Output> {
+        None
+    }
+}
 
 pub fn run(input: &str) -> usize {
     let (shapes, regions) = input

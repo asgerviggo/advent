@@ -3,14 +3,21 @@ use std::iter::once;
 
 use itertools::Itertools;
 
-use crate::ImplementPart;
-use crate::days::{NoPart1, Part2};
 use crate::util::parse;
 
+use crate::days::Solution;
+
 pub struct Day9;
-impl NoPart1 for Day9 {}
-// ImplementPart!(Day9, Part1, part1, run, usize);
-ImplementPart!(Day9, Part2, part2, run, usize);
+impl Solution for Day9 {
+    const VAL: usize = 9;
+    type Output = usize;
+    fn part1(_: &str) -> Option<Self::Output> {
+        None
+    }
+    fn part2(content: &str) -> Option<Self::Output> {
+        Some(run(content))
+    }
+}
 
 pub fn run(input: &str) -> usize {
     let tiles = input

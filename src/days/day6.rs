@@ -2,12 +2,19 @@
 
 use crate::util::parse;
 
-use crate::ImplementPart;
-use crate::days::{Part1, Part2};
+use crate::days::Solution;
 
 pub struct Day6;
-ImplementPart!(Day6, Part1, part1, part1, usize);
-ImplementPart!(Day6, Part2, part2, run, usize);
+impl Solution for Day6 {
+    const VAL: usize = 6;
+    type Output = usize;
+    fn part1(content: &str) -> Option<Self::Output> {
+        Some(part1(content))
+    }
+    fn part2(content: &str) -> Option<Self::Output> {
+        Some(run(content))
+    }
+}
 
 #[allow(unused_macros)]
 macro_rules! split {

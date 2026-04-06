@@ -1,13 +1,19 @@
 use crate::util::parse;
 use std::collections::HashSet;
 
-use crate::ImplementPart;
-use crate::days::{NoPart1, Part2};
+use crate::days::Solution;
 
 pub struct Day8;
-impl NoPart1 for Day8 {}
-// ImplementPart!(Day8, Part1, part1, run, usize);
-ImplementPart!(Day8, Part2, part2, run, usize);
+impl Solution for Day8 {
+    const VAL: usize = 8;
+    type Output = usize;
+    fn part1(_: &str) -> Option<Self::Output> {
+        None
+    }
+    fn part2(content: &str) -> Option<Self::Output> {
+        Some(run(content))
+    }
+}
 
 fn distance(
     (x1, y1, z1): (isize, isize, isize),

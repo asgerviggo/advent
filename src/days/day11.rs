@@ -5,14 +5,19 @@ use std::{
 
 use itertools::Itertools;
 
-use crate::{
-    ImplementPart,
-    days::{Part1, Part2},
-};
+use crate::days::Solution;
 
 pub struct Day11;
-ImplementPart!(Day11, Part1, part1, part1, usize);
-ImplementPart!(Day11, Part2, part2, part2, usize);
+impl Solution for Day11 {
+    const VAL: usize = 11;
+    type Output = usize;
+    fn part1(content: &str) -> Option<Self::Output> {
+        Some(part1(content))
+    }
+    fn part2(content: &str) -> Option<Self::Output> {
+        Some(part2(content))
+    }
+}
 
 fn part1(input: &str) -> usize {
     traverse_all_paths("you", "out", HashSet::new(), &create_graph(input))
@@ -21,7 +26,7 @@ fn part2(input: &str) -> usize {
     traverse_all_paths(
         "svr",
         "out",
-        HashSet::from(["dac", "fft"]),
+        HashSet::from(["fft", "dac"]),
         &create_graph(input),
     )
 }
@@ -48,6 +53,7 @@ fn create_graph(input: &str) -> HashMap<&str, Vec<&str>> {
         })
 }
 
+// This is not optimal: scales exponentially with vertices in via.
 fn traverse_all_paths(
     from: &str,
     to: &str,
@@ -56,14 +62,17 @@ fn traverse_all_paths(
 ) -> usize {
     let paths = via
         .iter()
-        .combinations(via.len());
+        .permutations(via.len());
+
     paths.fold(0, |sum, path| {
-        sum + once(from)
+        let combinations = once(from)
             .chain(
                 path.iter()
                     .map(|v| **v),
             )
-            .chain(once(to))
+            .chain(once(to));
+
+        sum + combinations
             .tuple_windows()
             .fold(1, |acc, (f, t)| acc * from_to(f, t, graph))
     })

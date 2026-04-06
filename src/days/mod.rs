@@ -1,4 +1,7 @@
+use colored::{ColoredString, Colorize};
+use std::cmp::Ordering;
 use std::fmt::Display;
+use std::time::{Duration, Instant};
 
 pub mod day1;
 pub mod day10;
@@ -13,73 +16,65 @@ pub mod day7;
 pub mod day8;
 pub mod day9;
 
-pub trait Part1 {
+pub trait Solution {
+    const VAL: usize = 0;
     type Output: Display;
-    fn part1(content: &str) -> Option<Self::Output>;
-}
-pub trait Part2 {
-    type Output: Display;
-    fn part2(content: &str) -> Option<Self::Output>;
-}
-
-// TODO make this cooler
-pub fn solve<S: Part1 + Part2>(content: &str) -> String {
-    match (S::part1(content), S::part2(content)) {
-        (None, None) => "Not implemented".to_string(),
-        (Some(sol1), None) => format!(":::: part 1 = {sol1}"),
-        (None, Some(sol2)) => format!(":::: part 2 = {sol2}"),
-        (Some(sol1), Some(sol2)) => {
-            format!(":::: part 1 = {sol1}\n :::: part 2 = {sol2}")
-        }
+    fn part1(_content: &str) -> Option<Self::Output> {
+        None
+    }
+    fn part2(_content: &str) -> Option<Self::Output> {
+        None
     }
 }
-#[allow(dead_code)]
-pub fn solve_part1<S: Part1>(content: &str) -> String {
+
+pub fn solve<S: Solution>(content: &str) -> Vec<String> {
+    Vec::from([
+        format!("part 1 = {}", solve_part1::<S>(content)),
+        format!("part 2 = {}", solve_part2::<S>(content)),
+    ])
+}
+
+pub fn solve_with_time<S: Solution>(content: &str) -> Vec<String> {
+    let (result1, time1) = time()(solve_part1::<S>, content, 100);
+    let (result2, time2) = time()(solve_part2::<S>, content, 100);
+    Vec::from([
+        format!("part 1 = {}", result1),
+        format!("time 1 = {}", time1),
+        format!("part 2 = {}", result2),
+        format!("time 2 = {}", time2),
+    ])
+}
+
+fn time<T>() -> impl FnOnce(T, &str, u64) -> (String, ColoredString)
+where
+    T: FnOnce(&str) -> String,
+{
+    |func, content, warn| {
+        let begin = Instant::now();
+        let result = func(content);
+        let end = Instant::now();
+
+        let done_time_val = end - begin;
+        let done_time_str =
+            match done_time_val.cmp(&Duration::from_millis(warn)) {
+                Ordering::Greater => format!("{done_time_val:?}").red(),
+                _ => format!("{done_time_val:?}").bold(),
+            };
+        (result, done_time_str)
+    }
+}
+
+pub fn solve_part1<S: Solution>(content: &str) -> String {
     match S::part1(content) {
         None => "Not implemented".to_string(),
-        Some(sol) => format!(":::: part 1 = {sol}"),
+        Some(sol) => sol.to_string(),
     }
 }
-#[allow(dead_code)]
-pub fn solve_part2<S: Part2>(content: &str) -> String {
+pub fn solve_part2<S: Solution>(content: &str) -> String {
     match S::part2(content) {
         None => "Not implemented".to_string(),
-        Some(sol) => format!(":::: part 2 = {sol}"),
+        Some(sol) => sol.to_string(),
     }
-}
-
-pub trait NoPart1 {}
-pub trait NoPart2 {}
-
-impl<Day> Part1 for Day
-where
-    Day: NoPart1,
-{
-    type Output = usize;
-    fn part1(_: &str) -> Option<Self::Output> {
-        None
-    }
-}
-impl<Day> Part2 for Day
-where
-    Day: NoPart2,
-{
-    type Output = usize;
-    fn part2(_: &str) -> Option<Self::Output> {
-        None
-    }
-}
-#[macro_export]
-macro_rules! ImplementPart {
-    ($day: ident, $struct_name: ident, $part: ident, $result: expr, $output: ty) => {
-        impl $struct_name for $day {
-            type Output = $output;
-
-            fn $part(content: &str) -> Option<Self::Output> {
-                Some($result(content))
-            }
-        }
-    };
 }
 
 // pub trait Test {

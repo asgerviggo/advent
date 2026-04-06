@@ -7,14 +7,19 @@ use std::{
 
 use itertools::Itertools;
 
-use crate::days::Part1;
-use crate::util::parse;
-use crate::{ImplementPart, days::NoPart2};
+use crate::{days::Solution, util::parse};
 
 pub struct Day10;
-ImplementPart!(Day10, Part1, part1, part1, usize);
-impl NoPart2 for Day10 {}
-// ImplementPart!(Day10, Part2, part2, part2, i16);
+impl Solution for Day10 {
+    const VAL: usize = 10;
+    type Output = usize;
+    fn part1(content: &str) -> Option<Self::Output> {
+        Some(part1(content))
+    }
+    fn part2(_: &str) -> Option<Self::Output> {
+        None
+    }
+}
 
 fn trim(string: &str) -> &str {
     string.trim_matches(&['{', '}', '(', ')', '[', ']'][..])

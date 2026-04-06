@@ -1,11 +1,18 @@
 use itertools::Itertools;
 
-use crate::ImplementPart;
-use crate::days::{Part1, Part2};
+use crate::days::Solution;
 
 pub struct Day5;
-ImplementPart!(Day5, Part1, part1, part1, usize);
-ImplementPart!(Day5, Part2, part2, run, usize);
+impl Solution for Day5 {
+    const VAL: usize = 5;
+    type Output = usize;
+    fn part1(content: &str) -> Option<Self::Output> {
+        Some(part1(content))
+    }
+    fn part2(content: &str) -> Option<Self::Output> {
+        Some(run(content))
+    }
+}
 
 fn parse(val: &str) -> isize {
     val.parse::<isize>()
